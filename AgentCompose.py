@@ -1,11 +1,14 @@
+import os
 import streamlit as st
 from crewai import Agent, Task, Crew, Process, LLM
 import json
 
 # Configurando o modelo usando a classe LLM nativa do CrewAI
-ollama_llm = LLM(
-    model="ollama/llama3.2", 
-    base_url="http://localhost:11434"
+gpt4o = 'gpt-4o'
+
+llm = LLM(
+    model="gpt-4",
+    temperature=0.8
 )
 
 # Função para configurar o agente e executar a composição
@@ -16,7 +19,7 @@ def criar_musica(sentimentos):
         goal="Escreva uma música cristã que exalte o nome de Cristo Jesus, expressando os seguintes sentimentos: {sentimentos}.",
         verbose=True,
         memory=True,
-        llm=ollama_llm,
+        llm=llm,
         backstory="""
             Desde jovem, você sentiu um profundo chamado para expressar sua fé e espiritualidade através da música.
             Inspirado pelos salmos, hinos e cânticos que ecoam a essência da adoração, você dedica sua vida a compor
@@ -45,10 +48,18 @@ def criar_musica(sentimentos):
             - Elementos teológicos: Incorporar passagens bíblicas.
         """,
         expected_output="""
-            - A letra completa da música, formatada em versos e refrão, separe os .
-            - Informar a melodia básica em notação musical simples e uma descrição do ritmo e tom, devidamente formatada.
-            - Criar a partitura e disponibilizar em uma seção logo após a letra da música, em formato de imagem, formatada.
+            - A letra completa da música, formatada em versos e refrão, devidamente formatada.
+            - Sugestão da melodia básica em notação musical simples e uma descrição do ritmo e tom, devidamente formatada.
+            - Sugestão de cifras para acompanhamento instrumental, devidamente formatada.
             - Breve descrição da intenção por trás da música e do impacto que ela busca causar nos ouvintes.
+            
+            O texto formatado deve seguir as seguintes regras:
+  			1. Títulos e subtítulos devem estar em negrito, utilizando markdown. Exemplo: `**Título da Música:**`.
+  			2. O conteúdo após os títulos deve manter espaçamento adequado e alinhamento claro.
+  			3. Listas devem ser utilizadas para itens estruturados, como informações técnicas ou descrições.
+  			4. Preserve a estrutura do texto original, incluindo versos, refrões e outros elementos musicais.
+  			5. O resultado deve ser apresentado em formato markdown para fácil leitura e exportação.
+            6. Fontes dos textos de tamanho 14 ou 16 para facilitar a leitura.
         """,
         agent=agent_escritor
     )
@@ -71,8 +82,8 @@ st.write("Crie músicas cristãs inspiradoras com base nos sentimentos desejados
 
 # Entrada do usuário
 sentimentos = st.text_input(
-    "Digite os sentimentos que deseja incluir na música (ex.: gratidão, esperança, perdão, Amor de Deus):",
-    "gratidão, esperança, perdão, Amor de Deus"
+    "Digite os sentimentos que deseja incluir na música (ex.: gratidão, esperança, perdão):",
+    "gratidão, esperança, perdão"
 )
 
 # Botão para gerar a música
@@ -104,4 +115,3 @@ if st.button("Gerar Música"):
         except Exception as e:
             st.error("Ocorreu um erro ao compor a música.")
             st.write(str(e))
-
