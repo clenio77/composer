@@ -1,6 +1,7 @@
 streamlit
 crewai
 crewai-tools
-sqlite3
-pysqlite3-binary
-chromadb
+
+__import__('pysqlite3')
+import sys
+sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
