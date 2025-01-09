@@ -1,4 +1,5 @@
 streamlit
 crewai
 crewai-tools
-sqlite3 >= 3.35.0
+streamlit==1.28.1
+chromadb==0.4.17
