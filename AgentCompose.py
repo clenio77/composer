@@ -2,7 +2,10 @@ import os
 import streamlit as st
 from crewai import Agent, Task, Crew, Process, LLM
 import json
-import chromadb
+
+__import__('pysqlite3')
+import sys
+sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
 client = chromadb.Client()
 
