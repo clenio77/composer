@@ -7,8 +7,6 @@ import streamlit as st
 from crewai import Agent, Task, Crew, Process, LLM
 import json
 
-client = chromadb.Client()
-
 # Configurando o modelo usando a classe LLM nativa do CrewAI
 gpt4o = 'gpt-4o'
 
