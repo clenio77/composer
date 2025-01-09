@@ -1,0 +1,33 @@
+# Diretórios e arquivos do ambiente virtual
+venv/
+env/
+__pycache__/
+
+# Arquivos de configuração e cache
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+
+# Logs e debug
+*.log
+*.out
+*.err
+
+# Configurações de IDEs
+.idea/
+.vscode/
+
+# Arquivos do sistema operacional
+.DS_Store
+Thumbs.db
+
+# Chaves e credenciais sensíveis
+.env
+*.key
+*.pem
+
+# Arquivos de build
+build/
+dist/
+*.egg-inf
