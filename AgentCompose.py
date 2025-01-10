@@ -52,6 +52,7 @@ def criar_musica(sentimentos):
             - Elementos teológicos: Incorporar passagens bíblicas.
         """,
         expected_output="""
+            - Responder, obrigatoriamente, no idioma Português Brasileiro.
             - A letra completa da música, formatada em versos e refrão, devidamente formatada.
             - Sugestão da melodia básica em notação musical simples e uma descrição do ritmo e tom, devidamente formatada.
             - Sugestão de cifras para acompanhamento instrumental, devidamente formatada.
