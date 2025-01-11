@@ -8,7 +8,7 @@ from crewai import Agent, Task, Crew, Process, LLM
 import json
 
 # Configurando o modelo usando a classe LLM nativa do CrewAI
-gpt4o = 'gpt-4o'
+gpt4o = 'gpt-4o-mini'
 
 llm = LLM(
     model="gpt-4",
