@@ -1,0 +1,40 @@
+services:
+  - type: web
+    name: compositor-catolico
+    env: python
+    region: oregon
+    plan: free
+    branch: master
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r requirements.txt
+    startCommand: |
+      streamlit run AgentCompose.py --server.port=$PORT --server.address=0.0.0.0 --server.headless=true --server.enableCORS=false --server.enableXsrfProtection=false
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: STREAMLIT_SERVER_PORT
+        fromService:
+          type: web
+          name: compositor-catolico
+          property: port
+      - key: STREAMLIT_SERVER_ADDRESS
+        value: "0.0.0.0"
+      - key: STREAMLIT_SERVER_HEADLESS
+        value: "true"
+      - key: STREAMLIT_BROWSER_GATHER_USAGE_STATS
+        value: "false"
+      - key: STREAMLIT_SERVER_ENABLE_CORS
+        value: "false"
+      - key: STREAMLIT_SERVER_ENABLE_XSRF_PROTECTION
+        value: "false"
+      - key: PYTHONPATH
+        value: "/opt/render/project/src"
+    healthCheckPath: /
+    disk:
+      name: compositor-data
+      mountPath: /opt/render/project/src/data
+      sizeGB: 1
+    scaling:
+      minInstances: 0
+      maxInstances: 1

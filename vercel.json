@@ -1,0 +1,33 @@
+{
+  "version": 2,
+  "name": "compositor-catolico",
+  "builds": [
+    {
+      "src": "AgentCompose.py",
+      "use": "@vercel/python",
+      "config": {
+        "maxLambdaSize": "50mb",
+        "runtime": "python3.10"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/AgentCompose.py"
+    }
+  ],
+  "env": {
+    "ENVIRONMENT": "production",
+    "STREAMLIT_SERVER_HEADLESS": "true",
+    "STREAMLIT_BROWSER_GATHER_USAGE_STATS": "false"
+  },
+  "functions": {
+    "AgentCompose.py": {
+      "maxDuration": 30
+    }
+  },
+  "regions": [
+    "iad1"
+  ]
+}

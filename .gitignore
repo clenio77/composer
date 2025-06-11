@@ -30,4 +30,33 @@ Thumbs.db
 # Arquivos de build
 build/
 dist/
-*.egg-inf
+*.egg-info/
+
+# Arquivos específicos do projeto
+*.mp3
+*.wav
+*.mid
+*.midi
+*.pdf
+dados_favoritos.json
+temp/
+uploads/
+ssl/
+
+# Secrets do Streamlit (apenas exemplo - não commitar com valores reais)
+.streamlit/secrets.toml
+
+# Arquivos temporários de áudio
+exemplo_audio_*.mp3
+musica_*.mp3
+instrumental_*.mp3
+mixagem_*.mp3
+
+# Backups
+backup_*.json
+*.backup
+
+# Cache adicional
+.cache/
+data/
+logs/
