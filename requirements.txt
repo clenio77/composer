@@ -8,3 +8,7 @@ pydub
 music21
 numpy
 scipy
+gtts
+librosa
+soundfile
+pyrubberband

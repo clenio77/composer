@@ -14,14 +14,24 @@ Uma aplicação inteligente que utiliza IA para compor músicas católicas perso
   - Mariano (Devoção à Nossa Senhora)
   - Litúrgico (Para Missa)
 
-### 🔊 Geração de Áudio
-- **Síntese de áudio simples** baseada no tom selecionado
-- **Progressões harmônicas** específicas para cada estilo
+### 🔊 Geração de Áudio Avançada
+- **Text-to-Speech em português brasileiro** para cantar as letras
+- **Áudio instrumental** baseado no tom e estilo selecionados
+- **Áudio com voz** combinando TTS + música instrumental
+- **Progressões harmônicas** específicas para cada estilo católico
 - **Player integrado** para reprodução imediata
-- **Download de arquivos MP3**
+- **Download de arquivos MP3** de alta qualidade
+
+### 🎵 Upload e Modificação de Músicas
+- **Upload de músicas existentes** (MP3, WAV, M4A, OGG)
+- **Mudança de tom preservando a voz** usando algoritmos avançados
+- **Suporte a múltiplos formatos** de entrada e saída
+- **Processamento em tempo real** com feedback visual
 
 ### 🎨 Interface Intuitiva
-- **Interface web moderna** com Streamlit
+- **Interface web moderna** com Streamlit e sistema de abas
+- **Aba "Criar Nova Música"** para composições originais
+- **Aba "Modificar Música Existente"** para upload e edição
 - **Configurações na sidebar** para tom e estilo
 - **Visualização formatada** em Markdown
 - **Feedback visual** durante o processamento
@@ -29,12 +39,15 @@ Uma aplicação inteligente que utiliza IA para compor músicas católicas perso
 ## 🛠️ Tecnologias Utilizadas
 
 - **Python 3.11+**
-- **Streamlit** - Interface web
+- **Streamlit** - Interface web moderna
 - **CrewAI** - Orquestração de agentes IA
-- **GPT-4** - Modelo de linguagem
-- **PyDub** - Manipulação de áudio
+- **GPT-4** - Modelo de linguagem para composição
+- **gTTS** - Text-to-Speech em português brasileiro
+- **LibROSA** - Processamento avançado de áudio
+- **SoundFile** - Manipulação de arquivos de áudio
+- **PyDub** - Edição e síntese de áudio
 - **Pygame** - Reprodução de áudio
-- **NumPy/SciPy** - Processamento numérico
+- **NumPy/SciPy** - Processamento numérico e científico
 
 ## 📦 Instalação
 
@@ -73,20 +86,39 @@ http://localhost:8501
 
 ## 🚀 Como Usar
 
-### 1. Configuração
+### 📝 Aba 1: Criar Nova Música
+
+#### 1. Configuração
 - **Selecione o tom musical** na sidebar (C, D, E, F, G, A, B, etc.)
 - **Escolha o estilo católico** desejado
 - **Digite os sentimentos ou temas** na área de texto
 
-### 2. Geração
-- Clique em **"🎵 Gerar Música"** para criar a composição
+#### 2. Geração da Composição
+- Clique em **"🎵 Gerar Música"** para criar letra e cifras
 - Aguarde o processamento (pode levar alguns segundos)
 - Visualize a letra, cifras e informações da música
 
-### 3. Áudio
-- Clique em **"🔊 Gerar Áudio"** após gerar uma música
-- Ouça o resultado no player integrado
-- Faça download do arquivo MP3 se desejar
+#### 3. Geração de Áudio
+- **🎼 Áudio Instrumental**: Base musical sem voz
+- **🎤 Áudio com Voz**: TTS em português + instrumental
+- Ouça no player integrado e faça download
+
+### 🎼 Aba 2: Modificar Música Existente
+
+#### 1. Upload
+- **Faça upload** de uma música (MP3, WAV, M4A, OGG)
+- Visualize informações do arquivo carregado
+- Ouça a música original no player
+
+#### 2. Configuração de Tons
+- **Selecione o tom original** da música
+- **Escolha o novo tom** desejado
+- Visualize a diferença em semitons
+
+#### 3. Processamento
+- Clique em **"🔄 Mudar Tom da Música"**
+- Aguarde o processamento (preserva qualidade da voz)
+- Ouça o resultado e faça download
 
 ## 📋 Exemplos de Uso
 
