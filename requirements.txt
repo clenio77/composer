@@ -2,3 +2,9 @@ streamlit
 crewai
 crewai-tools
 pysqlite3-binary
+mido
+pygame
+pydub
+music21
+numpy
+scipy
