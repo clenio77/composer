@@ -17,6 +17,18 @@ from gtts import gTTS
 import librosa
 import soundfile as sf
 import re
+from datetime import datetime
+
+# Importar módulos personalizados
+try:
+    from calendario_liturgico import CalendarioLiturgico
+    from gerador_partituras import GeradorPartituras
+    from sistema_vozes import SistemaVozes
+    from sistema_favoritos import SistemaFavoritos
+    from mixer_audio import MixerAudio
+except ImportError as e:
+    st.error(f"Erro ao importar módulos: {str(e)}")
+    st.stop()
 
 # Configurando o modelo usando a classe LLM nativa do CrewAI
 gpt4o = 'gpt-4o-mini'
@@ -25,6 +37,21 @@ llm = LLM(
     model="gpt-4",
     temperature=0.8
 )
+
+# Inicializar sistemas
+@st.cache_resource
+def inicializar_sistemas():
+    """Inicializa todos os sistemas do compositor"""
+    return {
+        "calendario": CalendarioLiturgico(),
+        "partituras": GeradorPartituras(),
+        "vozes": SistemaVozes(),
+        "favoritos": SistemaFavoritos(),
+        "mixer": MixerAudio()
+    }
+
+# Obter sistemas
+sistemas = inicializar_sistemas()
 
 # Função para gerar áudio simples baseado no tom
 def gerar_audio_simples(tom, estilo="tradicional"):
@@ -301,11 +328,34 @@ def criar_musica(sentimentos, tom, estilo):
     return result
 
 # Interface do Streamlit
-st.title("Compositor de Música Católica 🎵✝️")
-st.write("Crie músicas católicas inspiradoras para liturgia, devoção e oração.")
+st.set_page_config(
+    page_title="Compositor de Música Católica",
+    page_icon="🎵✝️",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+st.title("🎵✝️ Compositor de Música Católica")
+st.markdown("*Crie e modifique músicas católicas com IA avançada*")
+
+# Obter informações litúrgicas
+info_liturgica = sistemas["calendario"].obter_informacoes_completas()
+
+# Exibir informações litúrgicas no topo
+col_info1, col_info2, col_info3 = st.columns(3)
+with col_info1:
+    st.info(f"📅 **{info_liturgica['tempo']}** - Ano {info_liturgica['ano_liturgico']}")
+with col_info2:
+    st.success(f"🎨 **Estilo Sugerido:** {info_liturgica['estilo_sugerido'].title()}")
+with col_info3:
+    santo_hoje = sistemas["calendario"].obter_santos_do_dia()
+    if santo_hoje:
+        st.warning(f"✝️ **{santo_hoje}**")
+    else:
+        st.warning(f"🎵 **Temas:** {info_liturgica['temas_sugeridos']}")
 
 # Sidebar para configurações
-st.sidebar.header("⚙️ Configurações da Música")
+st.sidebar.header("⚙️ Configurações Musicais")
 
 # Seleção de tom
 tons_disponiveis = [
@@ -348,16 +398,56 @@ estilo_map = {
 }
 estilo = estilo_map[estilo_selecionado]
 
-# Abas principais
-tab1, tab2 = st.tabs(["🎵 Criar Nova Música", "🎼 Modificar Música Existente"])
+# Abas principais expandidas
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    "🎵 Criar Nova Música",
+    "🎼 Modificar Existente",
+    "💾 Favoritos & Playlists",
+    "🎚️ Mixer Avançado",
+    "📊 Estatísticas"
+])
 
 with tab1:
-    st.subheader("📝 Composição")
+    st.subheader("📝 Composição Musical")
+
+    # Usar sugestões litúrgicas
+    col_sugest1, col_sugest2 = st.columns(2)
+    with col_sugest1:
+        usar_sugestoes = st.checkbox(
+            f"📅 Usar sugestões para {info_liturgica['tempo']}",
+            value=True,
+            help="Usar temas e estilo sugeridos para o tempo litúrgico atual"
+        )
+
+    with col_sugest2:
+        if usar_sugestoes:
+            st.info(f"🎨 Estilo: {info_liturgica['estilo_sugerido'].title()}")
+
+    # Campo de sentimentos/temas
+    if usar_sugestoes:
+        sentimentos_default = info_liturgica['temas_sugeridos']
+        estilo_default = info_liturgica['estilo_sugerido']
+    else:
+        sentimentos_default = "gratidão, esperança, paz, devoção mariana"
+        estilo_default = estilo
+
     sentimentos = st.text_area(
         "Digite os sentimentos ou temas que deseja incluir na música:",
-        "gratidão, esperança, paz, devoção mariana",
+        sentimentos_default,
         height=100
     )
+
+    # Configurações avançadas
+    with st.expander("🔧 Configurações Avançadas"):
+        col_config1, col_config2 = st.columns(2)
+
+        with col_config1:
+            incluir_partituras = st.checkbox("🎼 Gerar partituras", value=True)
+            incluir_cifras_detalhadas = st.checkbox("🎸 Cifras detalhadas", value=True)
+
+        with col_config2:
+            incluir_coro_satb = st.checkbox("🎭 Arranjo para coro SATB", value=False)
+            salvar_automaticamente = st.checkbox("💾 Salvar automaticamente", value=True)
 
 with tab2:
     st.subheader("🎼 Upload e Modificação de Música")
@@ -577,6 +667,266 @@ if gerar_audio_com_letra:
             except Exception as e:
                 st.error("❌ Ocorreu um erro ao gerar o áudio com voz.")
                 st.error(f"Detalhes do erro: {str(e)}")
+
+# Aba 3: Favoritos e Playlists
+with tab3:
+    st.subheader("💾 Favoritos e Playlists")
+
+    # Sub-abas para organizar
+    subtab1, subtab2, subtab3 = st.tabs(["⭐ Favoritos", "📋 Playlists", "📚 Biblioteca"])
+
+    with subtab1:
+        st.write("### ⭐ Suas Músicas Favoritas")
+        favoritos = sistemas["favoritos"].obter_favoritos()
+
+        if favoritos:
+            for musica in favoritos[:5]:  # Mostrar apenas 5 primeiras
+                with st.expander(f"🎵 {musica['titulo']} ({musica['tom']} - {musica['estilo']})"):
+                    st.write(f"**Data:** {musica['data_criacao'][:10]}")
+                    st.write(f"**Reproduções:** {musica['contador_reproducoes']}")
+                    if st.button(f"▶️ Reproduzir", key=f"play_{musica['id']}"):
+                        musica_completa = sistemas["favoritos"].obter_musica(musica['id'])
+                        if 'audio_bytes' in musica_completa:
+                            st.audio(musica_completa['audio_bytes'], format='audio/mp3')
+        else:
+            st.info("Nenhuma música nos favoritos ainda. Crie uma música e adicione aos favoritos!")
+
+    with subtab2:
+        st.write("### 📋 Suas Playlists")
+
+        # Criar nova playlist
+        with st.expander("➕ Criar Nova Playlist"):
+            nome_playlist = st.text_input("Nome da playlist:")
+            desc_playlist = st.text_area("Descrição (opcional):")
+            if st.button("Criar Playlist"):
+                if nome_playlist:
+                    playlist_id = sistemas["favoritos"].criar_playlist(nome_playlist, desc_playlist)
+                    if playlist_id:
+                        st.success(f"✅ Playlist '{nome_playlist}' criada com sucesso!")
+                        st.rerun()
+
+        # Listar playlists existentes
+        playlists = sistemas["favoritos"].listar_playlists()
+        for playlist in playlists[:3]:  # Mostrar apenas 3 primeiras
+            with st.expander(f"📋 {playlist['nome']} ({playlist['quantidade_musicas']} músicas)"):
+                st.write(f"**Descrição:** {playlist['descricao']}")
+                st.write(f"**Criada em:** {playlist['data_criacao'][:10]}")
+                st.write(f"**Reproduções:** {playlist['contador_reproducoes']}")
+
+    with subtab3:
+        st.write("### 📚 Biblioteca Completa")
+
+        # Filtros
+        col_filtro1, col_filtro2 = st.columns(2)
+        with col_filtro1:
+            filtro_estilo = st.selectbox("Filtrar por estilo:", ["Todos"] + list(set([m['estilo'] for m in sistemas["favoritos"].listar_musicas()])))
+        with col_filtro2:
+            filtro_tom = st.selectbox("Filtrar por tom:", ["Todos"] + list(set([m['tom'] for m in sistemas["favoritos"].listar_musicas()])))
+
+        # Aplicar filtros
+        filtro_estilo_real = None if filtro_estilo == "Todos" else filtro_estilo
+        filtro_tom_real = None if filtro_tom == "Todos" else filtro_tom
+
+        musicas_filtradas = sistemas["favoritos"].listar_musicas(
+            filtro_estilo=filtro_estilo_real,
+            filtro_tom=filtro_tom_real
+        )
+
+        st.write(f"**{len(musicas_filtradas)} música(s) encontrada(s)**")
+
+        for musica in musicas_filtradas[:10]:  # Mostrar apenas 10 primeiras
+            col_info, col_acoes = st.columns([3, 1])
+            with col_info:
+                st.write(f"🎵 **{musica['titulo']}** - {musica['tom']} ({musica['estilo']})")
+                st.caption(f"Criada em {musica['data_criacao'][:10]} • {musica['contador_reproducoes']} reproduções")
+            with col_acoes:
+                if st.button("⭐", key=f"fav_{musica['id']}", help="Adicionar aos favoritos"):
+                    sistemas["favoritos"].adicionar_aos_favoritos(musica['id'])
+                    st.success("Adicionado aos favoritos!")
+
+# Aba 4: Mixer Avançado
+with tab4:
+    st.subheader("🎚️ Mixer de Áudio Avançado")
+
+    st.info("💡 **Dica:** Primeiro gere uma música com voz e instrumental, depois use o mixer para ajustar o som.")
+
+    # Verificar se há áudios na sessão
+    if 'ultima_letra' in st.session_state and 'ultimo_tom' in st.session_state:
+
+        # Presets de ambiente
+        col_preset1, col_preset2 = st.columns(2)
+        with col_preset1:
+            presets_disponiveis = sistemas["mixer"].obter_presets_disponiveis()
+            ambiente_selecionado = st.selectbox(
+                "🏛️ Ambiente acústico:",
+                list(presets_disponiveis["ambientes"].keys()),
+                format_func=lambda x: presets_disponiveis["ambientes"][x]
+            )
+
+        with col_preset2:
+            estilo_mixer = st.selectbox(
+                "🎨 Preset de estilo:",
+                list(presets_disponiveis["estilos"].keys()),
+                format_func=lambda x: presets_disponiveis["estilos"][x]
+            )
+
+        # Controles manuais
+        with st.expander("🎛️ Controles Manuais"):
+            col_vol1, col_vol2 = st.columns(2)
+            with col_vol1:
+                volume_voz = st.slider("🎤 Volume da Voz", -20, 20, 5)
+                eq_voz_low = st.slider("🔊 EQ Voz - Graves", -10, 10, 0)
+                eq_voz_mid = st.slider("🔊 EQ Voz - Médios", -10, 10, 2)
+                eq_voz_high = st.slider("🔊 EQ Voz - Agudos", -10, 10, 1)
+
+            with col_vol2:
+                volume_instrumental = st.slider("🎼 Volume Instrumental", -30, 10, -8)
+                reverb_amount = st.slider("🌊 Reverb", 0.0, 1.0, 0.15)
+                compressor = st.slider("🗜️ Compressor", -30, -5, -18)
+                fade_duration = st.slider("⏳ Fade In/Out (ms)", 0, 5000, 1000)
+
+        # Botão para aplicar mixagem
+        if st.button("🎚️ Aplicar Mixagem Avançada", type="primary"):
+            with st.spinner("Aplicando mixagem profissional..."):
+                try:
+                    # Gerar áudios base se não existirem
+                    letra = st.session_state.get('ultima_letra', '')
+                    tom_atual = st.session_state.get('ultimo_tom', 'C')
+                    estilo_atual = st.session_state.get('ultimo_estilo', 'tradicional')
+
+                    # Gerar áudio da voz
+                    audio_voz = sistemas["vozes"].gerar_audio_com_voz(letra, "feminina_adulta")
+                    audio_instrumental = gerar_audio_simples(tom_atual, estilo_atual)
+
+                    if audio_voz and audio_instrumental:
+                        # Aplicar mixagem personalizada
+                        audio_mixado = sistemas["mixer"].mixagem_personalizada(
+                            audio_voz, audio_instrumental,
+                            volume_voz=volume_voz,
+                            volume_instrumental=volume_instrumental,
+                            eq_voz_low=eq_voz_low,
+                            eq_voz_mid=eq_voz_mid,
+                            eq_voz_high=eq_voz_high,
+                            reverb_amount=reverb_amount,
+                            compressor_threshold=compressor
+                        )
+
+                        if audio_mixado:
+                            # Aplicar fade
+                            if fade_duration > 0:
+                                audio_final = sistemas["mixer"].criar_fade_in_out(
+                                    audio_mixado, fade_duration, fade_duration
+                                )
+                            else:
+                                audio_final = audio_mixado
+
+                            st.success("🎉 Mixagem aplicada com sucesso!")
+
+                            # Player
+                            st.audio(audio_final, format='audio/mp3')
+
+                            # Download
+                            st.download_button(
+                                label="⬇️ Download da Mixagem",
+                                data=audio_final,
+                                file_name=f"mixagem_{ambiente_selecionado}_{tom_atual}.mp3",
+                                mime="audio/mp3"
+                            )
+
+                            # Análise do áudio
+                            analise = sistemas["mixer"].analisar_audio(audio_final)
+                            if analise:
+                                with st.expander("📊 Análise do Áudio"):
+                                    col_analise1, col_analise2 = st.columns(2)
+                                    with col_analise1:
+                                        st.metric("Duração", f"{analise['duracao_segundos']:.1f}s")
+                                        st.metric("Volume Médio", f"{analise['volume_medio_db']:.1f} dB")
+                                    with col_analise2:
+                                        st.metric("Pico Máximo", f"{analise['pico_db']:.1f} dB")
+                                        st.metric("Sample Rate", f"{analise['sample_rate']} Hz")
+
+                                    if analise['recomendacoes']:
+                                        st.warning("⚠️ Recomendações:")
+                                        for rec in analise['recomendacoes']:
+                                            st.write(f"• {rec}")
+                        else:
+                            st.error("❌ Erro na mixagem")
+                    else:
+                        st.error("❌ Erro ao gerar áudios base")
+
+                except Exception as e:
+                    st.error(f"❌ Erro na mixagem: {str(e)}")
+    else:
+        st.warning("⚠️ Primeiro crie uma música na aba 'Criar Nova Música' para usar o mixer.")
+
+# Aba 5: Estatísticas
+with tab5:
+    st.subheader("📊 Estatísticas e Análises")
+
+    # Obter estatísticas
+    stats = sistemas["favoritos"].obter_estatisticas()
+
+    # Métricas principais
+    col_stat1, col_stat2, col_stat3, col_stat4 = st.columns(4)
+
+    with col_stat1:
+        st.metric("🎵 Total de Músicas", stats['total_musicas'])
+
+    with col_stat2:
+        st.metric("⭐ Favoritos", stats['total_favoritos'])
+
+    with col_stat3:
+        st.metric("📋 Playlists", stats['total_playlists'])
+
+    with col_stat4:
+        st.metric("🎨 Estilo Favorito", stats['estilo_mais_usado'][0])
+
+    # Informações litúrgicas
+    st.write("### 📅 Informações Litúrgicas")
+    col_lit1, col_lit2 = st.columns(2)
+
+    with col_lit1:
+        st.info(f"""
+        **Tempo Atual:** {info_liturgica['tempo']}
+        **Ano Litúrgico:** {info_liturgica['ano_liturgico']}
+        **Data:** {info_liturgica['data_atual']}
+        """)
+
+    with col_lit2:
+        st.success(f"""
+        **Estilo Sugerido:** {info_liturgica['estilo_sugerido'].title()}
+        **Temas Recomendados:** {info_liturgica['temas_sugeridos']}
+        """)
+
+    # Histórico recente
+    st.write("### 📈 Atividade Recente")
+    historico = sistemas["favoritos"].obter_historico(10)
+
+    if historico:
+        for entrada in historico[:5]:
+            acao_emoji = {
+                "criacao": "🎵",
+                "reproducao": "▶️",
+                "favorito_adicionado": "⭐",
+                "favorito_removido": "💔"
+            }
+            emoji = acao_emoji.get(entrada['acao'], "📝")
+
+            st.write(f"{emoji} **{entrada['titulo_musica']}** - {entrada['acao']} em {entrada['timestamp'][:10]}")
+    else:
+        st.info("Nenhuma atividade registrada ainda.")
+
+    # Dicas e sugestões
+    st.write("### 💡 Dicas e Sugestões")
+
+    # Sugestões baseadas no tempo litúrgico
+    sugestoes_liturgicas = sistemas["calendario"].obter_sugestoes_musicais_detalhadas()
+
+    with st.expander("🎼 Sugestões para o Tempo Litúrgico Atual"):
+        st.write(f"**Tons Recomendados:** {', '.join(sugestoes_liturgicas['tons_recomendados'])}")
+        st.write(f"**Instrumentação:** {', '.join(sugestoes_liturgicas['instrumentacao'])}")
+        if sugestoes_liturgicas['santo_do_dia']:
+            st.write(f"**Santo do Dia:** {sugestoes_liturgicas['santo_do_dia']}")
 
 # Rodapé
 st.markdown("---")

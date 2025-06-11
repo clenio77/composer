@@ -1,0 +1,10 @@
+{
+  "musicas": {},
+  "favoritos": [],
+  "playlists": {},
+  "historico": [],
+  "configuracoes": {
+    "max_historico": 100,
+    "auto_salvar": true
+  }
+}

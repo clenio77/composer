@@ -12,3 +12,6 @@ gtts
 librosa
 soundfile
 pyrubberband
+matplotlib
+plotly
+streamlit-option-menu
