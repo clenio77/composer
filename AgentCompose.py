@@ -201,6 +201,15 @@ def gerar_audio_com_voz(letra, tom, estilo, velocidade=1.0):
 def mudar_tom_musica(audio_bytes, tom_original, tom_novo):
     """Muda o tom de uma música preservando a velocidade e qualidade da voz"""
     try:
+        # Verificar se as bibliotecas necessárias estão disponíveis
+        try:
+            import librosa
+            import soundfile as sf
+        except ImportError as e:
+            st.error(f"❌ Bibliotecas necessárias não encontradas: {str(e)}")
+            st.error("💡 Instale as dependências: pip install librosa soundfile")
+            return None
+
         # Mapeamento de tons para semitons
         tons_semitons = {
             'C': 0, 'C#': 1, 'Db': 1, 'D': 2, 'D#': 3, 'Eb': 3,
@@ -214,39 +223,125 @@ def mudar_tom_musica(audio_bytes, tom_original, tom_novo):
         diferenca_semitons = semitom_novo - semitom_original
 
         if diferenca_semitons == 0:
+            st.info("ℹ️ Os tons são iguais. Nenhuma modificação necessária.")
             return audio_bytes  # Sem mudança necessária
 
-        # Salvar áudio em arquivo temporário
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as temp_input:
-            temp_input.write(audio_bytes)
-            temp_input.flush()
+        st.info(f"🎵 Alterando tom: {diferenca_semitons:+d} semitons")
 
-            # Carregar áudio com librosa
-            y, sr = librosa.load(temp_input.name, sr=None)
+        # Criar arquivos temporários
+        temp_input = None
+        temp_output = None
 
-            # Mudar tom preservando velocidade (pitch shifting)
-            y_shifted = librosa.effects.pitch_shift(y, sr=sr, n_steps=diferenca_semitons)
+        try:
+            # Salvar áudio em arquivo temporário
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as temp_input:
+                temp_input.write(audio_bytes)
+                temp_input.flush()
 
-            # Salvar resultado em arquivo temporário
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as temp_output:
-                sf.write(temp_output.name, y_shifted, sr)
+                st.info("📁 Carregando áudio...")
 
-                # Converter de volta para AudioSegment
-                audio_modificado = AudioSegment.from_wav(temp_output.name)
+                # Carregar áudio com librosa
+                y, sr = librosa.load(temp_input.name, sr=None)
 
-                # Converter para bytes
-                audio_bytes_novo = io.BytesIO()
-                audio_modificado.export(audio_bytes_novo, format="mp3")
-                audio_bytes_novo.seek(0)
+                st.info(f"🎼 Processando áudio: {len(y)} samples, {sr} Hz")
 
-                # Limpar arquivos temporários
-                os.unlink(temp_input.name)
-                os.unlink(temp_output.name)
+                # Verificar se o áudio foi carregado corretamente
+                if len(y) == 0:
+                    st.error("❌ Áudio vazio ou corrompido")
+                    return None
 
-                return audio_bytes_novo.getvalue()
+                # Mudar tom preservando velocidade (pitch shifting)
+                st.info("🔄 Aplicando mudança de tom...")
+                y_shifted = librosa.effects.pitch_shift(y, sr=sr, n_steps=diferenca_semitons)
+
+                # Salvar resultado em arquivo temporário
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as temp_output:
+                    sf.write(temp_output.name, y_shifted, sr)
+
+                    st.info("🎵 Convertendo para MP3...")
+
+                    # Converter de volta para AudioSegment
+                    audio_modificado = AudioSegment.from_wav(temp_output.name)
+
+                    # Converter para bytes
+                    audio_bytes_novo = io.BytesIO()
+                    audio_modificado.export(audio_bytes_novo, format="mp3")
+                    audio_bytes_novo.seek(0)
+
+                    return audio_bytes_novo.getvalue()
+
+        finally:
+            # Limpar arquivos temporários
+            try:
+                if temp_input and os.path.exists(temp_input.name):
+                    os.unlink(temp_input.name)
+                if temp_output and os.path.exists(temp_output.name):
+                    os.unlink(temp_output.name)
+            except Exception as cleanup_error:
+                st.warning(f"⚠️ Erro ao limpar arquivos temporários: {str(cleanup_error)}")
+
+    except ImportError as e:
+        st.error(f"❌ Erro de importação: {str(e)}")
+        st.error("💡 Algumas bibliotecas podem não estar instaladas no ambiente de produção.")
+        st.info("🔄 Tentando método alternativo...")
+        return mudar_tom_alternativo(audio_bytes, tom_original, tom_novo)
 
     except Exception as e:
-        st.error(f"Erro ao mudar tom da música: {str(e)}")
+        st.error(f"❌ Erro ao mudar tom da música: {str(e)}")
+        st.error(f"🔍 Tipo do erro: {type(e).__name__}")
+        st.info("🔄 Tentando método alternativo...")
+        return mudar_tom_alternativo(audio_bytes, tom_original, tom_novo)
+
+# Função alternativa para mudança de tom (usando apenas PyDub)
+def mudar_tom_alternativo(audio_bytes, tom_original, tom_novo):
+    """Método alternativo para mudança de tom usando apenas PyDub"""
+    try:
+        st.info("🔄 Usando método alternativo (PyDub)...")
+
+        # Mapeamento de tons para semitons
+        tons_semitons = {
+            'C': 0, 'C#': 1, 'Db': 1, 'D': 2, 'D#': 3, 'Eb': 3,
+            'E': 4, 'F': 5, 'F#': 6, 'Gb': 6, 'G': 7, 'G#': 8,
+            'Ab': 8, 'A': 9, 'A#': 10, 'Bb': 10, 'B': 11
+        }
+
+        # Calcular diferença em semitons
+        semitom_original = tons_semitons.get(tom_original, 0)
+        semitom_novo = tons_semitons.get(tom_novo, 0)
+        diferenca_semitons = semitom_novo - semitom_original
+
+        if diferenca_semitons == 0:
+            return audio_bytes
+
+        # Carregar áudio com PyDub
+        audio = AudioSegment.from_file(io.BytesIO(audio_bytes))
+
+        # Calcular fator de mudança de pitch (aproximação)
+        # Cada semitom = 2^(1/12) ≈ 1.059463
+        pitch_factor = 2 ** (diferenca_semitons / 12.0)
+
+        # Alterar sample rate para simular mudança de pitch
+        new_sample_rate = int(audio.frame_rate * pitch_factor)
+
+        # Aplicar mudança
+        audio_modificado = audio._spawn(
+            audio.raw_data,
+            overrides={"frame_rate": new_sample_rate}
+        ).set_frame_rate(audio.frame_rate)
+
+        # Converter para bytes
+        audio_bytes_novo = io.BytesIO()
+        audio_modificado.export(audio_bytes_novo, format="mp3")
+        audio_bytes_novo.seek(0)
+
+        st.success("✅ Tom alterado usando método alternativo!")
+        st.warning("⚠️ Nota: O método alternativo pode alterar ligeiramente a velocidade.")
+
+        return audio_bytes_novo.getvalue()
+
+    except Exception as e:
+        st.error(f"❌ Erro no método alternativo: {str(e)}")
+        st.error("💡 Tente fazer upload de um arquivo de áudio diferente.")
         return None
 
 # Função para configurar o agente e executar a composição

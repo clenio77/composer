@@ -1,3 +1,4 @@
+# Dependências Python
 streamlit
 crewai
 crewai-tools
@@ -15,3 +16,7 @@ pyrubberband
 matplotlib
 plotly
 streamlit-option-menu
+
+# NOTA: ffmpeg é uma dependência do sistema, não Python
+# Para instalar: sudo apt-get install ffmpeg (Ubuntu/Debian)
+# Para Docker: RUN apt-get update && apt-get install -y ffmpeg
