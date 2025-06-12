@@ -19,6 +19,14 @@ import soundfile as sf
 import re
 from datetime import datetime
 
+# Configuração da página (DEVE ser a primeira função do Streamlit)
+st.set_page_config(
+    page_title="Compositor de Música Católica",
+    page_icon="🎵✝️",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
 # Importar módulos personalizados
 try:
     from calendario_liturgico import CalendarioLiturgico
@@ -423,13 +431,6 @@ def criar_musica(sentimentos, tom, estilo):
     return result
 
 # Interface do Streamlit
-st.set_page_config(
-    page_title="Compositor de Música Católica",
-    page_icon="🎵✝️",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-
 st.title("🎵✝️ Compositor de Música Católica")
 st.markdown("*Crie e modifique músicas católicas com IA avançada*")
 
